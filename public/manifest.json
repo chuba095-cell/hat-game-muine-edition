@@ -1,0 +1,22 @@
+{
+  "short_name": "Hat Game",
+  "name": "The Hat Game MuiNe Edition",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#f3f4f6",
+  "background_color": "#ffffff"
+}
