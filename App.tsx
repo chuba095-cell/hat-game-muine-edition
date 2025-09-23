@@ -1,0 +1,402 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
+import GameSetup from './components/GameSetup';
+import TeamAssignment from './components/TeamAssignment';
+import Gameplay from './components/Gameplay';
+import RoundSummary from './components/RoundSummary';
+import TurnReview from './components/TurnReview';
+import { fetchWords } from './services/wordService';
+
+const TOTAL_ROUNDS = 3;
+const ROUND_DETAILS = [
+  { name: 'Объяснение', description: 'Объясняйте слова, не используя однокоренные.' },
+  { name: 'Пантомима', description: 'Показывайте слова жестами, без слов.' },
+  { name: 'Ассоциации', description: 'Объясняйте слова только одним словом-ассоциацией.' }
+];
+
+interface GameData {
+  gameState: GameState;
+  players: Player[];
+  numberOfTeams: number;
+  difficulty: Difficulty[];
+  wordsPerPlayer: number;
+  assignmentMethod: AssignmentMethod;
+  teams: Team[];
+  wordPool: string[];
+  guessedWords: string[];
+  currentTurnWords: string[];
+  currentTeamIndex: number;
+  currentPlayerIndices: number[];
+  timerDuration: number;
+  currentRound: number;
+  wordsForReview: string[];
+  lastWordForReview: string | undefined;
+  bonusTime: number | null;
+  bonusPlayerId: number | null;
+}
+
+const initialState: GameData = {
+  gameState: GameState.Setup,
+  players: [],
+  numberOfTeams: 2,
+  difficulty: [Difficulty.Easy],
+  wordsPerPlayer: 5,
+  assignmentMethod: AssignmentMethod.Random,
+  teams: [],
+  wordPool: [],
+  guessedWords: [],
+  currentTurnWords: [],
+  currentTeamIndex: 0,
+  currentPlayerIndices: [],
+  timerDuration: 30,
+  currentRound: 1,
+  wordsForReview: [],
+  lastWordForReview: undefined,
+  bonusTime: null,
+  bonusPlayerId: null,
+};
+
+
+const App: React.FC = () => {
+  const [gameData, setGameData] = useState<GameData>(() => {
+    try {
+      const savedState = localStorage.getItem('hatGameState');
+      if (savedState) {
+        // Here you could add more sophisticated versioning/migration if the state shape changes in the future
+        return JSON.parse(savedState);
+      }
+    } catch (error) {
+      console.error("Could not load state from localStorage", error);
+    }
+    return initialState;
+  });
+  
+  useEffect(() => {
+    localStorage.setItem('hatGameState', JSON.stringify(gameData));
+  }, [gameData]);
+
+  const {
+    gameState, players, numberOfTeams, difficulty, wordsPerPlayer, assignmentMethod, teams, wordPool,
+    guessedWords, currentTurnWords, currentTeamIndex, currentPlayerIndices, timerDuration, currentRound,
+    wordsForReview, lastWordForReview, bonusTime, bonusPlayerId
+  } = gameData;
+
+  const currentPlayer = teams[currentTeamIndex]?.players[currentPlayerIndices[currentTeamIndex]];
+
+  const resetGame = useCallback(() => {
+    localStorage.removeItem('hatGameState');
+    setGameData(initialState);
+  }, []);
+  
+  const handleStartSetup = (
+    players: Player[], 
+    numTeams: number, 
+    diff: Difficulty[], 
+    wordsCount: number, 
+    method: AssignmentMethod,
+    timer: number,
+  ) => {
+    setGameData(prev => ({
+      ...prev,
+      players,
+      numberOfTeams: numTeams,
+      difficulty: diff,
+      wordsPerPlayer: wordsCount,
+      assignmentMethod: method,
+      timerDuration: timer,
+      gameState: GameState.AssigningTeams,
+    }));
+  };
+  
+  const handleTeamsAssigned = useCallback((assignedTeams: Team[]) => {
+    setGameData(prev => ({
+      ...prev,
+      teams: assignedTeams,
+      currentPlayerIndices: new Array(assignedTeams.length).fill(0),
+      gameState: GameState.TeamsSummary,
+    }));
+  }, []);
+
+  const handleGoBack = () => {
+    if (gameState === GameState.AssigningTeams) {
+        setGameData(prev => ({...prev, gameState: GameState.Setup}));
+    } else if (gameState === GameState.TeamsSummary) {
+        setGameData(prev => ({
+          ...prev,
+          teams: [],
+          gameState: GameState.AssigningTeams
+        }));
+    }
+  };
+  
+  const handleConfirmTeams = () => {
+    setGameData(prev => ({...prev, gameState: GameState.GeneratingWords}));
+    
+    const totalWords = players.length * wordsPerPlayer;
+    const selectedDifficulties = difficulty;
+    const numDifficulties = selectedDifficulties.length;
+
+    if (numDifficulties === 0) {
+        console.error("No difficulty selected.");
+        setGameData(prev => ({...prev, gameState: GameState.TeamsSummary}));
+        return;
+    }
+
+    const wordsPerDifficulty = Math.floor(totalWords / numDifficulties);
+    let remainder = totalWords % numDifficulties;
+
+    const allWords = selectedDifficulties.flatMap(diff => {
+        const count = wordsPerDifficulty + (remainder > 0 ? 1 : 0);
+        if (remainder > 0) remainder--;
+        return fetchWords(diff, count);
+    });
+
+    const shuffledWords = allWords.sort(() => Math.random() - 0.5);
+    
+    // Use a small timeout to make the loading spinner visible for a better user experience
+    setTimeout(() => {
+      setGameData(prev => ({
+        ...prev,
+        wordPool: shuffledWords,
+        gameState: GameState.PlayerTurn,
+      }));
+    }, 500);
+  };
+  
+  const handleTurnFinish = (wordsGuessedThisTurn: string[], lastWord: string | undefined, remainingTime?: number) => {
+    const updates: Partial<GameData> = {
+      wordsForReview: wordsGuessedThisTurn,
+      lastWordForReview: lastWord,
+      gameState: GameState.TurnReview
+    };
+
+    if (bonusTime) {
+      updates.bonusTime = null;
+      updates.bonusPlayerId = null;
+    }
+    
+    if (remainingTime && remainingTime > 0 && currentPlayer) {
+      updates.bonusTime = remainingTime;
+      updates.bonusPlayerId = currentPlayer.id;
+    }
+
+    setGameData(prev => ({...prev, ...updates}));
+  };
+
+  const handleTurnEnd = (wordsGuessedThisTurn: string[]) => {
+    const wordsCount = wordsGuessedThisTurn.length;
+    const allGuessed = [...guessedWords, ...wordsGuessedThisTurn];
+
+    const updatedTeams = teams.map((team, teamIdx) => {
+      if (teamIdx === currentTeamIndex) {
+        const updatedPlayers = team.players.map((player, playerIdx) => {
+          if (playerIdx === currentPlayerIndices[currentTeamIndex]) {
+            return { ...player, score: player.score + wordsCount };
+          }
+          return player;
+        });
+        return {
+          ...team,
+          score: team.score + wordsCount,
+          players: updatedPlayers,
+        };
+      }
+      return team;
+    });
+
+    let nextGameState: GameState;
+    if (wordPool.length > 0 && allGuessed.length >= wordPool.length) {
+      if (currentRound < TOTAL_ROUNDS) {
+        nextGameState = GameState.EndOfRoundSummary;
+      } else {
+        nextGameState = GameState.RoundSummary;
+      }
+    } else {
+      nextGameState = GameState.TurnSummary;
+    }
+
+    setGameData(prev => ({
+      ...prev,
+      teams: updatedTeams,
+      guessedWords: allGuessed,
+      currentTurnWords: wordsGuessedThisTurn,
+      gameState: nextGameState,
+    }));
+  };
+
+  const handleReturnToReview = () => {
+    setGameData(prev => {
+      const wordsToRevert = prev.currentTurnWords;
+      const wordsCount = wordsToRevert.length;
+
+      const updatedTeams = prev.teams.map((team, teamIdx) => {
+        if (teamIdx === prev.currentTeamIndex) {
+          const updatedPlayers = team.players.map((player, playerIdx) => {
+            if (playerIdx === prev.currentPlayerIndices[prev.currentTeamIndex]) {
+              return { ...player, score: player.score - wordsCount };
+            }
+            return player;
+          });
+          return {
+            ...team,
+            score: team.score - wordsCount,
+            players: updatedPlayers,
+          };
+        }
+        return team;
+      });
+
+      const previousGuessedWords = prev.guessedWords.filter(word => !wordsToRevert.includes(word));
+
+      return {
+        ...prev,
+        teams: updatedTeams,
+        guessedWords: previousGuessedWords,
+        currentTurnWords: [],
+        gameState: GameState.TurnReview,
+      };
+    });
+  };
+  
+  const handleNextPlayer = () => {
+      const nextTeamIndex = (currentTeamIndex + 1) % teams.length;
+      const nextPlayerIndices = [...currentPlayerIndices];
+      nextPlayerIndices[currentTeamIndex] = (nextPlayerIndices[currentTeamIndex] + 1) % teams[currentTeamIndex].players.length;
+      
+      setGameData(prev => ({
+        ...prev,
+        currentTeamIndex: nextTeamIndex,
+        currentPlayerIndices: nextPlayerIndices,
+        currentTurnWords: [],
+        gameState: GameState.PlayerTurn,
+      }));
+  };
+
+  const handleStartNextRound = () => {
+    let nextTeamIndex = -1;
+    let nextPlayerIndices = [...currentPlayerIndices];
+    
+    if (bonusPlayerId) {
+        const bonusPlayerTeamIndex = teams.findIndex(team => team.players.some(p => p.id === bonusPlayerId));
+        if (bonusPlayerTeamIndex !== -1) {
+            const bonusPlayerIndexInTeam = teams[bonusPlayerTeamIndex].players.findIndex(p => p.id === bonusPlayerId);
+            nextPlayerIndices[bonusPlayerTeamIndex] = bonusPlayerIndexInTeam;
+            nextTeamIndex = bonusPlayerTeamIndex;
+        }
+    } 
+
+    if (nextTeamIndex === -1) {
+      // Fallback or normal rotation
+      nextTeamIndex = (currentTeamIndex + 1) % teams.length;
+      nextPlayerIndices[currentTeamIndex] = (nextPlayerIndices[currentTeamIndex] + 1) % teams[currentTeamIndex].players.length;
+    }
+
+    setGameData(prev => ({
+      ...prev,
+      currentRound: prev.currentRound + 1,
+      guessedWords: [],
+      currentTurnWords: [],
+      wordPool: [...prev.wordPool].sort(() => Math.random() - 0.5),
+      currentTeamIndex: nextTeamIndex,
+      currentPlayerIndices: nextPlayerIndices,
+      gameState: GameState.PlayerTurn,
+    }));
+  };
+
+  const handleEndGameEarly = () => {
+    setGameData(prev => ({...prev, gameState: GameState.RoundSummary}));
+  };
+
+  const currentTeam = teams[currentTeamIndex];
+  const currentRoundDetails = ROUND_DETAILS[currentRound - 1];
+
+  const renderContent = () => {
+    switch (gameState) {
+      case GameState.Setup:
+        return <GameSetup onStart={handleStartSetup} />;
+      case GameState.AssigningTeams:
+        return <TeamAssignment players={players} numberOfTeams={numberOfTeams} method={assignmentMethod} onComplete={handleTeamsAssigned} onBack={handleGoBack} />;
+      case GameState.TeamsSummary:
+        return (
+            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto animate-fade-in">
+                <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Команды сформированы!</h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    {teams.map((team, index) => (
+                        <div key={index} className={`p-4 ${team.color.bgColor} rounded-lg border ${team.color.borderColor}`}>
+                            <h3 className={`font-bold text-xl ${team.color.textColor} mb-3`}>{team.name}</h3>
+                            <ul className="space-y-2">
+                                {team.players.map(player => (
+                                    <li key={player.id} className={`text-lg font-medium ${team.color.textColor}`}>
+                                        {player.name}
+                                    </li>
+                                ))}
+                                {team.players.length === 0 && <li className="text-gray-500 italic">Нет игроков</li>}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex flex-col md:flex-row gap-4 mt-8">
+                    <button 
+                        onClick={handleGoBack} 
+                        className="w-full bg-gray-200 text-gray-800 font-bold py-4 px-6 text-xl rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                    >
+                        Назад
+                    </button>
+                    <button 
+                        onClick={handleConfirmTeams} 
+                        className="w-full bg-green-500 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                        Продолжить
+                    </button>
+                </div>
+            </div>
+        );
+      case GameState.GeneratingWords:
+          return (
+              <div className="flex flex-col items-center justify-center h-full space-y-4">
+                  <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin-fast border-indigo-500"></div>
+                  <h2 className="text-2xl font-semibold text-gray-700">Готовим слова...</h2>
+              </div>
+          )
+      case GameState.PlayerTurn:
+        const durationForTurn = bonusTime ?? timerDuration;
+        return <Gameplay key={`${currentTeamIndex}-${currentPlayerIndices[currentTeamIndex]}-${currentRound}-${durationForTurn}`} timerDuration={durationForTurn} wordPool={wordPool.filter(w => !guessedWords.includes(w))} onTurnFinish={handleTurnFinish} currentPlayer={currentPlayer} currentTeam={currentTeam} roundName={currentRoundDetails.name} roundDescription={currentRoundDetails.description} />;
+      case GameState.TurnReview:
+        return <TurnReview initialGuessedWords={wordsForReview} lastWord={lastWordForReview} onConfirm={handleTurnEnd} />;
+      case GameState.TurnSummary:
+        return (
+            <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
+                <h2 className="text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!</h2>
+                <p className="text-lg mb-6 text-gray-600">Слова, которые ты объяснил(а):</p>
+                <div className="grid grid-cols-2 gap-2 mb-8 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-md">
+                    {currentTurnWords.length > 0 ? currentTurnWords.map((word, index) => <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm capitalize">{word}</span>) : <p className="col-span-2 text-gray-500">Не было угадано ни одного слова.</p>}
+                </div>
+                <div className="flex flex-col gap-3 mt-8">
+                    <button onClick={handleNextPlayer} className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        Следующий игрок
+                    </button>
+                    <button onClick={handleReturnToReview} className="w-full bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
+                        Назад к проверке
+                    </button>
+                </div>
+            </div>
+        );
+      case GameState.EndOfRoundSummary:
+          return <RoundSummary teams={teams} onNewGame={handleStartNextRound} onEndGame={handleEndGameEarly} isFinal={false} currentRound={currentRound} roundName={currentRoundDetails.name} />;
+      case GameState.RoundSummary:
+          return <RoundSummary teams={teams} onNewGame={resetGame} isFinal={true} />;
+      default:
+        return <div>Что-то пошло не так.</div>;
+    }
+  };
+
+  return (
+    <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+       <div className="w-full max-w-4xl mx-auto relative">
+         {renderContent()}
+      </div>
+    </div>
+  );
+};
+
+export default App;
