@@ -318,8 +318,8 @@ const App: React.FC = () => {
         return <TeamAssignment players={players} numberOfTeams={numberOfTeams} method={assignmentMethod} onComplete={handleTeamsAssigned} onBack={handleGoBack} />;
       case GameState.TeamsSummary:
         return (
-            <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto animate-fade-in">
-                <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Команды сформированы!</h1>
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto animate-fade-in">
+                <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 text-gray-800">Команды сформированы!</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {teams.map((team, index) => (
                         <div key={index} className={`p-4 ${team.color.bgColor} rounded-lg border ${team.color.borderColor}`}>
@@ -338,13 +338,13 @@ const App: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-4 mt-8">
                     <button 
                         onClick={handleGoBack} 
-                        className="w-full bg-gray-200 text-gray-800 font-bold py-4 px-6 text-xl rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                        className="w-full bg-gray-200 text-gray-800 font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
                     >
                         Назад
                     </button>
                     <button 
                         onClick={handleConfirmTeams} 
-                        className="w-full bg-green-500 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                        className="w-full bg-green-500 text-white font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                         Продолжить
                     </button>
@@ -365,11 +365,11 @@ const App: React.FC = () => {
         return <TurnReview initialGuessedWords={wordsForReview} lastWord={lastWordForReview} onConfirm={handleTurnEnd} />;
       case GameState.TurnSummary:
         return (
-            <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!</h2>
-                <p className="text-lg mb-6 text-gray-600">Слова, которые ты объяснил(а):</p>
+            <div className="text-center p-6 sm:p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!</h2>
+                <p className="text-base sm:text-lg mb-6 text-gray-600">Слова, которые ты объяснил(а):</p>
                 <div className="grid grid-cols-2 gap-2 mb-8 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-md">
-                    {currentTurnWords.length > 0 ? currentTurnWords.map((word, index) => <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm capitalize">{word}</span>) : <p className="col-span-2 text-gray-500">Не было угадано ни одного слова.</p>}
+                    {currentTurnWords.length > 0 ? currentTurnWords.map((word, index) => <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">{word}</span>) : <p className="col-span-2 text-gray-500">Не было угадано ни одного слова.</p>}
                 </div>
                 <div className="flex flex-col gap-3 mt-8">
                     <button onClick={handleNextPlayer} className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
@@ -391,7 +391,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
        <div className="w-full max-w-4xl mx-auto relative">
          {renderContent()}
       </div>

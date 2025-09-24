@@ -47,11 +47,11 @@ const RoundSummary: React.FC<RoundSummaryProps> = ({ teams, onNewGame, isFinal, 
 
   return (
     <>
-      <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md mx-auto text-center">
-        <h1 className="text-4xl font-bold mb-2 text-gray-800">
+      <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-md mx-auto text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 text-gray-800">
           {isFinal ? 'Игра окончена!' : `Раунд ${currentRound}: ${roundName} завершен!`}
         </h1>
-        <p className="text-lg text-gray-500 mb-8">
+        <p className="text-base sm:text-lg text-gray-500 mb-8">
           {isFinal ? 'Итоговые результаты:' : 'Текущие очки:'}
         </p>
 
@@ -59,14 +59,14 @@ const RoundSummary: React.FC<RoundSummaryProps> = ({ teams, onNewGame, isFinal, 
           {sortedTeams.map((team, index) => {
             const isWinner = isFinal && team.score === maxTeamScore && maxTeamScore > 0;
             return (
-              <div key={team.name} className={`flex items-center p-4 rounded-lg shadow-sm ${isWinner ? team.color.bgColor : 'bg-gray-50'}`}>
-                <span className={`text-3xl font-bold w-12 ${index < 3 ? 'text-gray-700' : 'text-gray-500'}`}>{index + 1}</span>
+              <div key={team.name} className={`flex items-center p-3 sm:p-4 rounded-lg shadow-sm ${isWinner ? team.color.bgColor : 'bg-gray-50'}`}>
+                <span className={`text-2xl sm:text-3xl font-bold w-10 sm:w-12 ${index < 3 ? 'text-gray-700' : 'text-gray-500'}`}>{index + 1}</span>
                 <div className="text-left flex-grow">
-                  <p className={`text-xl font-semibold ${team.color.textColor}`}>{team.name}</p>
-                  <p className={`text-sm ${team.color.textColor} opacity-75`}>{team.players.map(p => p.name).join(', ')}</p>
+                  <p className={`text-lg sm:text-xl font-semibold ${team.color.textColor}`}>{team.name}</p>
+                  <p className={`text-xs sm:text-sm ${team.color.textColor} opacity-75`}>{team.players.map(p => p.name).join(', ')}</p>
                 </div>
-                {isWinner && <TrophyIcon className="w-10 h-10 text-yellow-400" />}
-                <span className="text-2xl font-bold text-indigo-600 w-20 text-right">{team.score} очков</span>
+                {isWinner && <TrophyIcon className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-400" />}
+                <span className="text-xl sm:text-2xl font-bold text-indigo-600 w-16 sm:w-20 text-right">{team.score} очков</span>
               </div>
             );
           })}
@@ -74,15 +74,15 @@ const RoundSummary: React.FC<RoundSummaryProps> = ({ teams, onNewGame, isFinal, 
 
         {isFinal && bestPlayers.length > 0 && (
           <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
-            <h2 className="text-xl font-semibold text-gray-700 mb-3">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-3">
               {bestPlayers.length > 1 ? 'Лучшие игроки' : 'Лучший игрок'}
             </h2>
              <div className="space-y-3">
               {bestPlayers.map(player => (
-                <div key={player.id} className="bg-amber-100 p-4 rounded-lg flex items-center justify-center gap-4 shadow">
-                  <TrophyIcon className="w-8 h-8 text-amber-500" />
-                  <p className={`text-2xl font-bold ${getPlayerTeamColor(player)}`}>{player.name}</p>
-                  <span className="text-2xl font-bold text-amber-700">{player.score} слов</span>
+                <div key={player.id} className="bg-amber-100 p-3 sm:p-4 rounded-lg flex items-center justify-center gap-4 shadow">
+                  <TrophyIcon className="w-6 h-6 sm:w-8 sm:h-8 text-amber-500" />
+                  <p className={`text-xl sm:text-2xl font-bold ${getPlayerTeamColor(player)}`}>{player.name}</p>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-700">{player.score} слов</span>
                 </div>
               ))}
             </div>

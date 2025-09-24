@@ -38,9 +38,9 @@ const TurnReview: React.FC<TurnReviewProps> = ({ initialGuessedWords, lastWord, 
   const hasWordsToList = initialGuessedWords.length > 0;
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto animate-fade-in">
-      <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Время вышло!</h1>
-      <p className="text-lg text-gray-600 text-center mb-6">Проверьте угаданные слова.</p>
+    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto animate-fade-in">
+      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-2 text-gray-800">Время вышло!</h1>
+      <p className="text-base sm:text-lg text-gray-600 text-center mb-6">Проверьте угаданные слова.</p>
 
       {hasWordsToList && (
         <div className="mb-6">
@@ -53,7 +53,7 @@ const TurnReview: React.FC<TurnReviewProps> = ({ initialGuessedWords, lastWord, 
                 <button
                   key={word}
                   onClick={() => toggleWord(word)}
-                  className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all duration-200 capitalize ${
+                  className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                     isConfirmed 
                       ? 'bg-green-100 text-green-800 hover:bg-green-200' 
                       : 'bg-gray-200 text-gray-500 line-through hover:bg-gray-300'
@@ -74,7 +74,7 @@ const TurnReview: React.FC<TurnReviewProps> = ({ initialGuessedWords, lastWord, 
           <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-lg">
             <button
               onClick={toggleLastWord}
-              className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center capitalize ${
+              className={`w-full text-left px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center ${
                 isLastWordAdded
                   ? 'bg-green-100 text-green-800 hover:bg-green-200'
                   : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-200'
@@ -93,7 +93,7 @@ const TurnReview: React.FC<TurnReviewProps> = ({ initialGuessedWords, lastWord, 
 
       <button
         onClick={handleConfirm}
-        className="w-full bg-indigo-600 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+        className="w-full bg-indigo-600 text-white font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
       >
         Подтвердить и продолжить
       </button>

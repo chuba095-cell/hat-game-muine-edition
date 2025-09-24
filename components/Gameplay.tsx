@@ -13,6 +13,16 @@ interface GameplayProps {
   roundDescription: string;
 }
 
+const getWordFontSize = (word: string | undefined): string => {
+    if (!word) return 'text-2xl';
+    const length = word.length;
+    if (length <= 8) return 'sm:text-5xl text-4xl';
+    if (length <= 12) return 'sm:text-4xl text-3xl';
+    if (length <= 18) return 'sm:text-3xl text-2xl';
+    if (length <= 25) return 'sm:text-2xl text-xl';
+    return 'sm:text-xl text-lg';
+};
+
 const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlayer, currentTeam, timerDuration, roundName, roundDescription }) => {
   const [timer, setTimer] = useState(timerDuration);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -107,9 +117,10 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
 
   const currentWord = wordPool[currentWordIndex];
   const timerProgress = (timer / timerDuration) * 100;
+  const wordFontSize = getWordFontSize(currentWord);
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-2xl text-center">
+    <div className="w-full max-w-2xl mx-auto p-4 sm:p-8 bg-white rounded-2xl shadow-2xl text-center">
       <div className="mb-4 text-center border-b border-gray-200 pb-4">
           <p className="text-lg font-semibold text-gray-600">
             Раунд: <span className="text-indigo-600 font-bold">{roundName}</span>
@@ -119,21 +130,21 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
 
       <div className="mb-6">
         <p className="text-xl text-gray-500">Ход команды:</p>
-        <h2 className={`text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentTeam.name}</h2>
+        <h2 className={`text-3xl sm:text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentTeam.name}</h2>
         <p className="text-xl text-gray-500 mt-2">Играет:</p>
-        <h3 className={`text-3xl font-bold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h3>
+        <h3 className={`text-2xl sm:text-3xl font-bold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h3>
       </div>
       
       {!isTimerRunning && countdown === null && (
         <div className="flex flex-col items-center">
             <div className="mb-6 bg-gray-100 p-4 rounded-lg text-center shadow-inner">
               <p className="text-lg font-medium text-gray-700">Осталось слов в шляпе:</p>
-              <p className="text-4xl font-bold text-indigo-600">{wordPool.length}</p>
+              <p className="text-3xl sm:text-4xl font-bold text-indigo-600">{wordPool.length}</p>
             </div>
             <p className="text-lg text-gray-600 mb-6">Готов(а)?</p>
             <button
                 onClick={startCountdown}
-                className="bg-green-500 text-white font-bold py-4 px-10 text-2xl rounded-xl hover:bg-green-600 transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50"
+                className="bg-green-500 text-white font-bold py-3 px-8 sm:py-4 sm:px-10 text-xl sm:text-2xl rounded-xl hover:bg-green-600 transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50"
             >
                 Запуск таймера
             </button>
@@ -141,18 +152,18 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
       )}
 
       {!isTimerRunning && countdown !== null && (
-        <div className="flex flex-col items-center justify-center min-h-[300px] text-9xl font-extrabold text-indigo-600">
+        <div className="flex flex-col items-center justify-center min-h-[300px] font-extrabold text-indigo-600">
           {countdown > 0 ? (
-            <p key={countdown} className="animate-pop-in">{countdown}</p>
+            <p key={countdown} className="animate-pop-in text-8xl sm:text-9xl">{countdown}</p>
           ) : (
-            <p key="start" className="animate-pop-in text-8xl">Старт!</p>
+            <p key="start" className="animate-pop-in text-7xl sm:text-8xl">Старт!</p>
           )}
         </div>
       )}
       
       {isTimerRunning && (
         <div className="flex flex-col items-center">
-          <div className="relative w-40 h-40 flex items-center justify-center mb-8">
+          <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center mb-8">
               <svg className="w-full h-full" viewBox="0 0 100 100">
                   <circle
                       className="text-gray-200"
@@ -177,15 +188,15 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
                       style={{ transition: 'stroke-dashoffset 1s linear' }}
                   />
               </svg>
-              <span className="absolute text-5xl font-bold text-gray-800">{timer}</span>
+              <span className="absolute text-4xl sm:text-5xl font-bold text-gray-800">{timer}</span>
           </div>
 
           <button
             onClick={handleNextWord}
             disabled={!currentWord || isPaused}
-            className="bg-gray-50 w-full p-10 rounded-xl mb-4 min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+            className="bg-gray-50 w-full p-6 sm:p-10 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
           >
-            <h1 className={`text-5xl font-bold tracking-wider transition-all duration-300 capitalize ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
+            <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
                 {currentWord || "Слова закончились!"}
             </h1>
           </button>

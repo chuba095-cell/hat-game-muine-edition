@@ -62,8 +62,8 @@ const TeamAssignment: React.FC<TeamAssignmentProps> = ({ players, numberOfTeams,
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-center mb-6 text-gray-800">Распределение по командам</h1>
+    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-4xl mx-auto">
+      <h1 className="text-2xl sm:text-3xl font-bold text-center mb-6 text-gray-800">Распределение по командам</h1>
       
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-3 text-gray-700">Нераспределенные игроки</h2>
@@ -99,14 +99,14 @@ const TeamAssignment: React.FC<TeamAssignmentProps> = ({ players, numberOfTeams,
       <div className="mt-8 flex flex-col md:flex-row gap-4">
         <button 
             onClick={onBack}
-            className="w-full bg-gray-200 text-gray-800 font-bold py-4 px-6 text-xl rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+            className="w-full bg-gray-200 text-gray-800 font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
         >
             Назад
         </button>
         <button 
           onClick={() => onComplete(teams)} 
           disabled={unassignedPlayers.length > 0} 
-          className="w-full bg-green-500 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-green-500 text-white font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
         >
           Подтвердить команды
         </button>

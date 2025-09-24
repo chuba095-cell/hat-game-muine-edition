@@ -103,8 +103,8 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
   );
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto">
-      <h1 className="text-4xl font-bold text-center mb-8 text-gray-800">Игра в Шляпу</h1>
+    <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto">
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-gray-800">Игра в Шляпу</h1>
 
       {/* Players Section */}
       <div className="mb-6">
@@ -207,7 +207,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-gray-700">6. Сложность слов</h2>
         <p className="text-sm text-gray-500 mb-2">Можно выбрать несколько.</p>
-        <div className="flex gap-4 rounded-lg bg-gray-100 p-2">
+        <div className="flex flex-col sm:flex-row gap-4 rounded-lg bg-gray-100 p-2">
           {Object.values(Difficulty).map((d) => (
             <div key={d} className="w-full flex flex-col items-center gap-1">
               <button onClick={() => toggleDifficulty(d)} className={`w-full p-2 rounded-md font-medium transition-all duration-200 capitalize ${selectedDifficulties.includes(d) ? 'bg-indigo-600 text-white shadow transform scale-105' : 'text-gray-600 hover:bg-gray-200'}`}>
@@ -219,7 +219,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
         </div>
       </div>
 
-      <button onClick={handleStart} className="w-full bg-green-500 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+      <button onClick={handleStart} className="w-full bg-green-500 text-white font-bold py-3 sm:py-4 px-6 text-lg sm:text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
         Начать игру
       </button>
     </div>
