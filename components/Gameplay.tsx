@@ -1,214 +1,196 @@
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Player, Team } from '../types';
-import { playCorrectSound, unlockAudio, playTimerEndSound, playTimerTickSound, playPauseSound, playUnpauseSound } from '../services/soundService';
+import { playCorrectSound, playTimerEndSound, playTimerTickSound, unlockAudio, playPauseSound, playUnpauseSound } from '../services/soundService';
 
 interface GameplayProps {
+  timerDuration: number;
   wordPool: string[];
-  onTurnFinish: (wordsGuessedThisTurn: string[], lastWord: string | undefined, remainingTime?: number) => void;
+  onTurnFinish: (guessedWords: string[], lastWord: string | undefined, remainingTime?: number) => void;
   currentPlayer: Player;
   currentTeam: Team;
-  timerDuration: number;
   roundName: string;
   roundDescription: string;
 }
 
-const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlayer, currentTeam, timerDuration, roundName, roundDescription }) => {
-  const [timer, setTimer] = useState(timerDuration);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+const Gameplay: React.FC<GameplayProps> = ({
+  timerDuration,
+  wordPool,
+  onTurnFinish,
+  currentPlayer,
+  currentTeam,
+  roundName,
+  roundDescription,
+}) => {
+  const [shuffledWords, setShuffledWords] = useState<string[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [guessedWordsThisTurn, setGuessedWordsThisTurn] = useState<string[]>([]);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  const [guessedWords, setGuessedWords] = useState<string[]>([]);
+  const [timeLeft, setTimeLeft] = useState(timerDuration);
+  const [isGameActive, setIsGameActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
-  const timeoutCallbackRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    // On every render, update the ref with a new callback that has the latest state.
-    timeoutCallbackRef.current = () => {
-      playTimerEndSound();
-      setIsTimerRunning(false);
-      onTurnFinish(guessedWordsThisTurn, wordPool[currentWordIndex]);
-    };
-  }, [guessedWordsThisTurn, wordPool, currentWordIndex, onTurnFinish]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // The main timer interval logic.
-    // It only re-runs if the timer is started, stopped, or paused.
-    // Clicking "Next Word" will NOT cause this effect to re-run and reset the 1-second tick.
-    if (!isTimerRunning || isPaused) {
-      return;
-    }
+    // Shuffle words on component mount
+    setShuffledWords([...wordPool].sort(() => Math.random() - 0.5));
+  }, [wordPool]);
 
-    const interval = setInterval(() => {
-      setTimer((prevTimer) => {
-        if (prevTimer <= 1) {
-          clearInterval(interval);
-          timeoutCallbackRef.current?.(); // Execute the timeout logic
-          return 0;
-        }
-        if (prevTimer <= 4 && prevTimer > 1) {
-          playTimerTickSound();
-        }
-        return prevTimer - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isTimerRunning, isPaused]);
-  
+  // Timer logic
   useEffect(() => {
-    if (countdown === null) return;
-
-    if (countdown > 0) {
-      const timerId = setTimeout(() => {
-        setCountdown(c => (c !== null ? c - 1 : null));
+    if (isGameActive && !isPaused) {
+      timerRef.current = setInterval(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            playTimerEndSound();
+            onTurnFinish(guessedWords, shuffledWords[currentWordIndex], 0);
+            return 0;
+          }
+          if (prev <= 6 && prev > 1) {
+            playTimerTickSound();
+          }
+          return prev - 1;
+        });
       }, 1000);
-      return () => clearTimeout(timerId);
-    } else { // countdown is 0
-      const startTimerId = setTimeout(() => {
-        setIsTimerRunning(true);
-        setCountdown(null);
-      }, 800);
-      return () => clearTimeout(startTimerId);
-    }
-  }, [countdown]);
-
-
-  const startCountdown = () => {
-    unlockAudio();
-    setCountdown(3);
-  };
-  
-  const togglePause = () => {
-    if (isPaused) {
-      playUnpauseSound();
     } else {
-      playPauseSound();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     }
-    setIsPaused(prev => !prev);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGameActive, isPaused]);
+
+  const handleStartGame = () => {
+    unlockAudio();
+    setIsGameActive(true);
   };
 
-  const handleNextWord = useCallback(() => {
-    playCorrectSound();
-    if (currentWordIndex < wordPool.length) {
-        const newGuessedWords = [...guessedWordsThisTurn, wordPool[currentWordIndex]];
-        setGuessedWordsThisTurn(newGuessedWords);
-        
-        if (currentWordIndex + 1 >= wordPool.length) {
-             // Words ran out, finish the turn and pass remaining time
-             setIsTimerRunning(false);
-             onTurnFinish(newGuessedWords, undefined, timer);
-        } else {
-            setCurrentWordIndex(prev => prev + 1);
-        }
+  const nextWord = useCallback(() => {
+    if (currentWordIndex >= shuffledWords.length - 1) {
+      // End of words, finish turn with remaining time
+      if (timerRef.current) clearInterval(timerRef.current);
+      onTurnFinish(guessedWords, undefined, timeLeft);
+    } else {
+      setCurrentWordIndex(prev => prev + 1);
     }
-  }, [currentWordIndex, wordPool, onTurnFinish, guessedWordsThisTurn, timer]);
+  }, [currentWordIndex, shuffledWords.length, onTurnFinish, guessedWords, timeLeft]);
 
-  const currentWord = wordPool[currentWordIndex];
-  const timerProgress = (timer / timerDuration) * 100;
+  const handleCorrect = () => {
+    playCorrectSound();
+    setGuessedWords(prev => [...prev, shuffledWords[currentWordIndex]]);
+    nextWord();
+  };
+
+  const handleSkip = () => {
+    nextWord();
+  };
+
+  const togglePause = () => {
+    setIsPaused(prev => {
+      if (prev) {
+        playUnpauseSound();
+      } else {
+        playPauseSound();
+      }
+      return !prev;
+    });
+  };
+
+  const currentWord = shuffledWords[currentWordIndex];
+  
+  // Render logic: Pre-game screen
+  if (!isGameActive) {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto animate-fade-in">
+        <h2 className={`text-2xl font-bold mb-2 ${currentTeam.color.textColor}`}>Раунд: {roundName}</h2>
+        <p className="text-gray-600 mb-4">{roundDescription}</p>
+        <div className="my-6 p-4 bg-gray-50 rounded-lg">
+          <p className="text-lg text-gray-500">Сейчас объясняет:</p>
+          <p className={`text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentPlayer.name}</p>
+          <p className="text-lg text-gray-500">из команды «{currentTeam.name.replace('Команда ', '')}»</p>
+        </div>
+        <p className="text-gray-600 mb-8">Приготовьтесь! У вас будет {timerDuration} секунд.</p>
+        <button onClick={handleStartGame} className="w-full bg-green-500 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+          Начать
+        </button>
+      </div>
+    );
+  }
+  
+  // Render logic: Pause screen
+  if (isPaused) {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
+        <h2 className="text-3xl font-bold text-gray-800 mb-4">Пауза</h2>
+        <p className="text-xl text-gray-600 mb-8">Осталось времени: {timeLeft} сек</p>
+        <button onClick={togglePause} className="w-full bg-indigo-600 text-white font-bold py-4 px-6 text-xl rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+          Продолжить
+        </button>
+      </div>
+    );
+  }
+  
+  // Render logic: Out of words
+  if (!currentWord) {
+    return (
+      <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Слова закончились!</h2>
+        <p className="text-lg mb-6 text-gray-600">Отличная работа! Вы объяснили все слова.</p>
+      </div>
+    );
+  }
+
+  // Render logic: Active game screen
+  const timerColor = timeLeft <= 10 ? 'text-red-500' : 'text-gray-800';
+  const progressPercentage = (timeLeft / timerDuration) * 100;
+  const progressColor = timeLeft <= 10 ? 'bg-red-500' : 'bg-green-500';
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-2xl text-center">
-      <div className="mb-4 text-center border-b border-gray-200 pb-4">
-          <p className="text-lg font-semibold text-gray-600">
-            Раунд: <span className="text-indigo-600 font-bold">{roundName}</span>
-          </p>
-          <p className="text-sm text-gray-500 mt-1">{roundDescription}</p>
-      </div>
-
-      <div className="mb-6">
-        <p className="text-xl text-gray-500">Ход команды:</p>
-        <h2 className={`text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentTeam.name}</h2>
-        <p className="text-xl text-gray-500 mt-2">Играет:</p>
-        <h3 className={`text-3xl font-bold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h3>
+    <div className="flex flex-col h-[80vh] max-h-[700px] w-full max-w-lg mx-auto bg-white rounded-2xl shadow-2xl p-6 pt-10 relative overflow-hidden">
+      <header className="flex justify-between items-center mb-4">
+        <div className="text-left">
+          <p className={`text-lg font-bold ${currentTeam.color.textColor}`}>{currentPlayer.name}</p>
+          <p className="text-sm text-gray-500">Очки за ход: <span className="font-bold text-indigo-600 text-lg">{guessedWords.length}</span></p>
+        </div>
+        <div className="text-right">
+          <div className={`text-5xl font-bold ${timerColor}`}>{timeLeft}</div>
+        </div>
+      </header>
+      
+      <div className="absolute top-0 left-0 h-2.5 bg-gray-200 w-full">
+        <div 
+          className={`h-full ${progressColor} transition-all duration-1000 linear`}
+          style={{ width: `${progressPercentage}%` }}
+        ></div>
       </div>
       
-      {!isTimerRunning && countdown === null && (
-        <div className="flex flex-col items-center">
-            <div className="mb-6 bg-gray-100 p-4 rounded-lg text-center shadow-inner">
-              <p className="text-lg font-medium text-gray-700">Осталось слов в шляпе:</p>
-              <p className="text-4xl font-bold text-indigo-600">{wordPool.length}</p>
-            </div>
-            <p className="text-lg text-gray-600 mb-6">Готов(а)?</p>
-            <button
-                onClick={startCountdown}
-                className="bg-green-500 text-white font-bold py-4 px-10 text-2xl rounded-xl hover:bg-green-600 transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50"
-            >
-                Запуск таймера
-            </button>
-        </div>
-      )}
+      <div className="flex-grow flex items-center justify-center text-center p-4 my-4 bg-gray-50 rounded-lg">
+        <h1 className="text-6xl font-extrabold text-gray-800 capitalize break-words animate-pop-in">
+          {currentWord}
+        </h1>
+      </div>
 
-      {!isTimerRunning && countdown !== null && (
-        <div className="flex flex-col items-center justify-center min-h-[300px] text-9xl font-extrabold text-indigo-600">
-          {countdown > 0 ? (
-            <p key={countdown} className="animate-pop-in">{countdown}</p>
-          ) : (
-            <p key="start" className="animate-pop-in text-8xl">Старт!</p>
-          )}
-        </div>
-      )}
+      <footer className="grid grid-cols-2 gap-4">
+        <button onClick={handleSkip} className="w-full bg-yellow-400 text-yellow-900 font-bold py-6 text-2xl rounded-lg hover:bg-yellow-500 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2">
+          Пропустить
+        </button>
+        <button onClick={handleCorrect} className="w-full bg-green-500 text-white font-bold py-6 text-2xl rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+          Правильно
+        </button>
+      </footer>
       
-      {isTimerRunning && (
-        <div className="flex flex-col items-center">
-          <div className="relative w-40 h-40 flex items-center justify-center mb-8">
-              <svg className="w-full h-full" viewBox="0 0 100 100">
-                  <circle
-                      className="text-gray-200"
-                      strokeWidth="8"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="45"
-                      cx="50"
-                      cy="50"
-                  />
-                  <circle
-                      className="text-indigo-500"
-                      strokeWidth="8"
-                      strokeDasharray="283"
-                      strokeDashoffset={283 - (283 * timerProgress) / 100}
-                      strokeLinecap="round"
-                      stroke="currentColor"
-                      fill="transparent"
-                      r="45"
-                      cx="50"
-                      cy="50"
-                      style={{ transition: 'stroke-dashoffset 1s linear' }}
-                  />
-              </svg>
-              <span className="absolute text-5xl font-bold text-gray-800">{timer}</span>
-          </div>
+      <button onClick={togglePause} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 focus:outline-none">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6" />
+        </svg>
+      </button>
 
-          <button
-            onClick={handleNextWord}
-            disabled={!currentWord || isPaused}
-            className="bg-gray-50 w-full p-10 rounded-xl mb-4 min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
-          >
-            <h1 className={`text-5xl font-bold tracking-wider transition-all duration-300 capitalize ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
-                {currentWord || "Слова закончились!"}
-            </h1>
-          </button>
-          
-          <div className="w-full flex flex-col gap-3 mt-4">
-            <button
-              onClick={togglePause}
-              className="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-yellow-600 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 flex items-center justify-center"
-              aria-label={isPaused ? 'Продолжить' : 'Пауза'}
-            >
-              {isPaused ? (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                </svg>
-              )}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
