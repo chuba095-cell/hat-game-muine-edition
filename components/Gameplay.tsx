@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Player, Team } from '../types';
 import { playCorrectSound, playTimerEndSound, playTimerTickSound, unlockAudio, playPauseSound, playUnpauseSound } from '../services/soundService';
@@ -29,7 +28,18 @@ const Gameplay: React.FC<GameplayProps> = ({
   const [isGameActive, setIsGameActive] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // FIX: In browser environments, setInterval returns a number, not a NodeJS.Timeout object.
+  const timerRef = useRef<number | null>(null);
+  
+  const getWordFontSize = (word: string | undefined): string => {
+    if (!word) return '3.75rem';
+    const length = word.length;
+    if (length <= 8) return '5rem';    // 80px
+    if (length <= 12) return '4rem';   // 64px
+    if (length <= 16) return '3.25rem';// 52px
+    if (length <= 20) return '2.75rem';// 44px
+    return '2.25rem';                  // 36px
+  };
 
   useEffect(() => {
     // Shuffle words on component mount
@@ -171,7 +181,10 @@ const Gameplay: React.FC<GameplayProps> = ({
       </div>
       
       <div className="flex-grow flex items-center justify-center text-center p-4 my-4 bg-gray-50 rounded-lg">
-        <h1 className="text-6xl font-extrabold text-gray-800 capitalize break-words animate-pop-in">
+        <h1 
+          className="font-extrabold text-gray-800 capitalize break-words animate-pop-in"
+          style={{ fontSize: getWordFontSize(currentWord), lineHeight: '1.1' }}
+        >
           {currentWord}
         </h1>
       </div>
