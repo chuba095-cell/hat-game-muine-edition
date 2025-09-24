@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
 import GameSetup from './components/GameSetup';
 import TeamAssignment from './components/TeamAssignment';
@@ -74,6 +75,51 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('hatGameState', JSON.stringify(gameData));
   }, [gameData]);
+
+  const wakeLockSentinelRef = useRef<WakeLockSentinel | null>(null);
+
+  useEffect(() => {
+    // Screen Wake Lock API to prevent the screen from turning off.
+    const requestWakeLock = async () => {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockSentinelRef.current = await navigator.wakeLock.request('screen');
+          console.log('Screen Wake Lock is active.');
+          wakeLockSentinelRef.current.addEventListener('release', () => {
+            console.log('Screen Wake Lock was released.');
+            wakeLockSentinelRef.current = null;
+          });
+        } catch (err) {
+          console.error(`Could not acquire wake lock: ${(err as Error).name}, ${(err as Error).message}`);
+        }
+      } else {
+        console.warn('Screen Wake Lock API not supported.');
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (wakeLockSentinelRef.current === null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    requestWakeLock();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (wakeLockSentinelRef.current) {
+        wakeLockSentinelRef.current.release()
+          .then(() => {
+            wakeLockSentinelRef.current = null;
+            console.log('Screen Wake Lock released on component unmount.');
+          })
+          .catch((err) => {
+             console.error(`Could not release wake lock: ${(err as Error).name}, ${(err as Error).message}`);
+          });
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const {
     gameState, players, numberOfTeams, difficulty, wordsPerPlayer, assignmentMethod, teams, wordPool,

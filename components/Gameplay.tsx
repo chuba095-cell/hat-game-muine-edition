@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Team } from '../types';
 import { playCorrectSound, unlockAudio, playTimerEndSound, playTimerTickSound, playPauseSound, playUnpauseSound } from '../services/soundService';
@@ -33,51 +34,6 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const timeoutCallbackRef = useRef<(() => void) | null>(null);
-  const wakeLockSentinelRef = useRef<WakeLockSentinel | null>(null);
-
-  useEffect(() => {
-    // Screen Wake Lock API to prevent the screen from turning off during gameplay.
-    const requestWakeLock = async () => {
-      if ('wakeLock' in navigator) {
-        try {
-          wakeLockSentinelRef.current = await navigator.wakeLock.request('screen');
-          console.log('Screen Wake Lock is active.');
-          wakeLockSentinelRef.current.addEventListener('release', () => {
-            console.log('Screen Wake Lock was released.');
-            // The lock is released when the page loses visibility.
-            // It will be re-acquired on visibilitychange.
-          });
-        } catch (err) {
-          console.error(`Could not acquire wake lock: ${(err as Error).name}, ${(err as Error).message}`);
-        }
-      } else {
-        console.warn('Screen Wake Lock API not supported.');
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        requestWakeLock();
-      }
-    };
-
-    requestWakeLock();
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      if (wakeLockSentinelRef.current) {
-        wakeLockSentinelRef.current.release()
-          .then(() => {
-            wakeLockSentinelRef.current = null;
-            console.log('Screen Wake Lock released on component unmount.');
-          })
-          .catch((err) => {
-             console.error(`Could not release wake lock: ${(err as Error).name}, ${(err as Error).message}`);
-          });
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
 
   useEffect(() => {
     // On every render, update the ref with a new callback that has the latest state.
