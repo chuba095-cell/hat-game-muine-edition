@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
 import GameSetup from './components/GameSetup';
@@ -26,13 +27,10 @@ const useScreenWakeLock = () => {
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
       try {
-        // A wake lock sentinel is released when the user navigates away from the page.
-        // We need to re-request it when the page becomes visible again.
         if (document.visibilityState === 'visible') {
+            // FIX: Added the required 'screen' parameter to the request method.
             wakeLockSentinel.current = await navigator.wakeLock.request('screen');
             wakeLockSentinel.current.addEventListener('release', () => {
-                // The wake lock was released for some reason (e.g., tab became inactive).
-                // It will be re-acquired automatically by the visibilitychange event listener.
                 console.log('Screen Wake Lock was released.');
                 wakeLockSentinel.current = null;
             });
@@ -47,11 +45,9 @@ const useScreenWakeLock = () => {
   }, []);
 
   useEffect(() => {
-    // Request the lock when the component mounts.
     requestWakeLock();
 
     const handleVisibilityChange = () => {
-      // Re-acquire the lock if it's null (was released) and the page is visible again.
       if (wakeLockSentinel.current === null && document.visibilityState === 'visible') {
         requestWakeLock();
       }
@@ -59,7 +55,6 @@ const useScreenWakeLock = () => {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Release the lock when the component unmounts.
     return () => {
       if (wakeLockSentinel.current) {
         wakeLockSentinel.current.release();
@@ -121,7 +116,6 @@ const App: React.FC = () => {
     try {
       const savedState = localStorage.getItem('hatGameState');
       if (savedState) {
-        // Here you could add more sophisticated versioning/migration if the state shape changes in the future
         return JSON.parse(savedState);
       }
     } catch (error) {
@@ -212,7 +206,6 @@ const App: React.FC = () => {
 
     const shuffledWords = allWords.sort(() => Math.random() - 0.5);
     
-    // Use a small timeout to make the loading spinner visible for a better user experience
     setTimeout(() => {
       setGameData(prev => ({
         ...prev,
