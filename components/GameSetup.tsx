@@ -1,3 +1,4 @@
+// FIX: Moved all component logic, including state hooks and helper functions, inside the GameSetup functional component to resolve scope-related errors and ensure proper component structure.
 import React, { useState, useEffect } from 'react';
 import { Difficulty, AssignmentMethod, Player } from '../types';
 import { getWordCounts } from '../services/wordService';
@@ -23,6 +24,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
   const [timerDuration, setTimerDuration] = useState(30);
   const [recentPlayers, setRecentPlayers] = useState<string[]>([]);
   const wordCounts = getWordCounts();
+
+  const [teamsInputValue, setTeamsInputValue] = useState(numberOfTeams.toString());
+  const [wordsInputValue, setWordsInputValue] = useState(wordsPerPlayer.toString());
 
   useEffect(() => {
     try {
@@ -101,6 +105,40 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
   const availableRecentPlayers = recentPlayers.filter(
     recentName => !players.some(p => p.name.toLowerCase() === recentName.toLowerCase())
   );
+  
+  const handleTeamsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setTeamsInputValue(value);
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num > 0) {
+      setNumberOfTeams(num);
+    }
+  };
+
+  const handleTeamsBlur = () => {
+    const num = parseInt(teamsInputValue, 10);
+    if (isNaN(num) || num < 2) {
+      setNumberOfTeams(2);
+      setTeamsInputValue('2');
+    }
+  };
+
+  const handleWordsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setWordsInputValue(value);
+    const num = parseInt(value, 10);
+    if (!isNaN(num) && num > 0) {
+      setWordsPerPlayer(num);
+    }
+  };
+
+  const handleWordsBlur = () => {
+    const num = parseInt(wordsInputValue, 10);
+    if (isNaN(num) || num < 1) {
+      setWordsPerPlayer(1);
+      setWordsInputValue('1');
+    }
+  };
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto">
@@ -158,8 +196,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
           <h2 className="text-xl font-semibold mb-3 text-gray-700">2. Количество команд</h2>
           <input
             type="number"
-            value={numberOfTeams}
-            onChange={(e) => setNumberOfTeams(Math.max(2, parseInt(e.target.value) || 2))}
+            value={teamsInputValue}
+            onChange={handleTeamsChange}
+            onBlur={handleTeamsBlur}
             min="2"
             max={players.length > 1 ? players.length : 10}
             className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -171,8 +210,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
             <h2 className="text-xl font-semibold mb-3 text-gray-700">3. Слов на игрока</h2>
             <input
                 type="number"
-                value={wordsPerPlayer}
-                onChange={(e) => setWordsPerPlayer(Math.max(1, parseInt(e.target.value) || 1))}
+                value={wordsInputValue}
+                onChange={handleWordsChange}
+                onBlur={handleWordsBlur}
                 min="1"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
