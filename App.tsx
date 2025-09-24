@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
 import GameSetup from './components/GameSetup';
 import TeamAssignment from './components/TeamAssignment';
@@ -6,6 +7,7 @@ import Gameplay from './components/Gameplay';
 import RoundSummary from './components/RoundSummary';
 import TurnReview from './components/TurnReview';
 import { fetchWords } from './services/wordService';
+import ScreenWaker from './components/ScreenWaker';
 
 const TOTAL_ROUNDS = 3;
 const ROUND_DETAILS = [
@@ -13,6 +15,73 @@ const ROUND_DETAILS = [
   { name: 'Пантомима', description: 'Показывайте слова жестами, без слов.' },
   { name: 'Ассоциации', description: 'Объясняйте слова только одним словом-ассоциацией.' }
 ];
+
+const isIOS = () => {
+  return [
+    'iPad Simulator',
+    'iPhone Simulator',
+    'iPod Simulator',
+    'iPad',
+    'iPhone',
+    'iPod'
+  ].includes(navigator.platform)
+  // iPad on iOS 13 detection
+  || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+};
+
+
+/**
+ * Custom hook to manage the screen wake lock.
+ * It requests a wake lock when the component mounts and handles re-acquiring it
+ * when the page visibility changes (e.g., user tabs back to the app).
+ * The lock is released when the component unmounts.
+ * This hook will only attempt to use the API on non-iOS devices.
+ */
+const useScreenWakeLock = () => {
+  const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
+
+  const requestWakeLock = useCallback(async () => {
+    // Only run on non-iOS devices that support the API
+    if (!isIOS() && 'wakeLock' in navigator) {
+      try {
+        if (document.visibilityState === 'visible') {
+            wakeLockSentinel.current = await navigator.wakeLock.request('screen');
+            wakeLockSentinel.current.addEventListener('release', () => {
+                console.log('Screen Wake Lock was released.');
+                wakeLockSentinel.current = null;
+            });
+            console.log('Screen Wake Lock is active.');
+        }
+      } catch (err: any) {
+        console.error(`Failed to acquire screen wake lock: ${err.name}, ${err.message}`);
+      }
+    } else if (!isIOS()) {
+        console.warn('Screen Wake Lock API not supported on this browser.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isIOS()) return; // Do not run this hook on iOS
+
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      if (wakeLockSentinel.current === null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (wakeLockSentinel.current) {
+        wakeLockSentinel.current.release();
+        wakeLockSentinel.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [requestWakeLock]);
+};
 
 interface GameData {
   gameState: GameState;
@@ -58,43 +127,7 @@ const initialState: GameData = {
 
 
 const App: React.FC = () => {
-  // Упрощенная реализация блокировки экрана.
-  useEffect(() => {
-    let wakeLockSentinel: WakeLockSentinel | null = null;
-
-    const requestWakeLock = async () => {
-      // Wake Lock API доступен только в безопасном контексте (HTTPS).
-      // Проверка `in navigator` неявно это учитывает.
-      if ('wakeLock' in navigator) {
-        try {
-          wakeLockSentinel = await navigator.wakeLock.request('screen');
-          alert('Блокировка экрана успешно активирована!');
-          
-          wakeLockSentinel.addEventListener('release', () => {
-            console.log('Блокировка экрана была снята.');
-            wakeLockSentinel = null;
-          });
-
-        } catch (err: any) {
-          alert(`Не удалось активировать блокировку экрана: ${err.name}, ${err.message}`);
-        }
-      } else {
-        alert('Wake Lock API не поддерживается в этом браузере или приложение запущено не в безопасном контексте (HTTPS).');
-      }
-    };
-
-    // Активация блокировки экрана с задержкой в 2 секунды для отладки.
-    const timeoutId = setTimeout(requestWakeLock, 2000);
-
-    // Функция очистки для снятия блокировки при размонтировании компонента.
-    return () => {
-      clearTimeout(timeoutId);
-      if (wakeLockSentinel) {
-        wakeLockSentinel.release();
-        wakeLockSentinel = null;
-      }
-    };
-  }, []); // Пустой массив зависимостей гарантирует, что эффект выполнится только один раз при запуске.
+  useScreenWakeLock();
   
   const [gameData, setGameData] = useState<GameData>(() => {
     try {
@@ -428,9 +461,10 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+       {isIOS() && <ScreenWaker />}
        <div className="w-full max-w-4xl mx-auto relative">
          {renderContent()}
-      </div>
+       </div>
     </div>
   );
 };
