@@ -124,7 +124,7 @@ const App: React.FC = () => {
         setGameData(prev => ({
           ...prev,
           teams: [],
-          gameState: GameState.AssigningTeams
+          gameState: GameState.Setup
         }));
     }
   };
