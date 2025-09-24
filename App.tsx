@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
 import GameSetup from './components/GameSetup';
 import TeamAssignment from './components/TeamAssignment';
@@ -13,6 +13,62 @@ const ROUND_DETAILS = [
   { name: 'Пантомима', description: 'Показывайте слова жестами, без слов.' },
   { name: 'Ассоциации', description: 'Объясняйте слова только одним словом-ассоциацией.' }
 ];
+
+/**
+ * Custom hook to manage the screen wake lock.
+ * It requests a wake lock when the component mounts and handles re-acquiring it
+ * when the page visibility changes (e.g., user tabs back to the app).
+ * The lock is released when the component unmounts.
+ */
+const useScreenWakeLock = () => {
+  const wakeLockSentinel = useRef<WakeLockSentinel | null>(null);
+
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        // A wake lock sentinel is released when the user navigates away from the page.
+        // We need to re-request it when the page becomes visible again.
+        if (document.visibilityState === 'visible') {
+            wakeLockSentinel.current = await navigator.wakeLock.request('screen');
+            wakeLockSentinel.current.addEventListener('release', () => {
+                // The wake lock was released for some reason (e.g., tab became inactive).
+                // It will be re-acquired automatically by the visibilitychange event listener.
+                console.log('Screen Wake Lock was released.');
+                wakeLockSentinel.current = null;
+            });
+            console.log('Screen Wake Lock is active.');
+        }
+      } catch (err: any) {
+        console.error(`Failed to acquire screen wake lock: ${err.name}, ${err.message}`);
+      }
+    } else {
+        console.warn('Screen Wake Lock API not supported on this browser.');
+    }
+  }, []);
+
+  useEffect(() => {
+    // Request the lock when the component mounts.
+    requestWakeLock();
+
+    const handleVisibilityChange = () => {
+      // Re-acquire the lock if it's null (was released) and the page is visible again.
+      if (wakeLockSentinel.current === null && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Release the lock when the component unmounts.
+    return () => {
+      if (wakeLockSentinel.current) {
+        wakeLockSentinel.current.release();
+        wakeLockSentinel.current = null;
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [requestWakeLock]);
+};
 
 interface GameData {
   gameState: GameState;
@@ -58,6 +114,9 @@ const initialState: GameData = {
 
 
 const App: React.FC = () => {
+  // Activate wake lock for the entire app session
+  useScreenWakeLock();
+  
   const [gameData, setGameData] = useState<GameData>(() => {
     try {
       const savedState = localStorage.getItem('hatGameState');
