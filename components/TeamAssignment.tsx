@@ -15,7 +15,7 @@ const TeamAssignment: React.FC<TeamAssignmentProps> = ({ players, numberOfTeams,
   const [activeTeamIndex, setActiveTeamIndex] = useState(0);
 
   useEffect(() => {
-    const initialTeams = Array.from({ length: numberOfTeams }, (_, i) => {
+    const initialTeams: Team[] = Array.from({ length: numberOfTeams }, (_, i) => {
       const color = TEAM_COLORS[i % TEAM_COLORS.length];
       return {
         name: `Команда ${color.name}`,
