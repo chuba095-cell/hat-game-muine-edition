@@ -6,7 +6,6 @@ import Gameplay from './components/Gameplay';
 import RoundSummary from './components/RoundSummary';
 import TurnReview from './components/TurnReview';
 import { fetchWords } from './services/wordService';
-import { useStayAwake } from './hooks/useStayAwake';
 
 const TOTAL_ROUNDS = 3;
 const ROUND_DETAILS = [
@@ -59,12 +58,11 @@ const initialState: GameData = {
 
 
 const App: React.FC = () => {
-  useStayAwake();
-  
   const [gameData, setGameData] = useState<GameData>(() => {
     try {
       const savedState = localStorage.getItem('hatGameState');
       if (savedState) {
+        // Here you could add more sophisticated versioning/migration if the state shape changes in the future
         return JSON.parse(savedState);
       }
     } catch (error) {
@@ -155,6 +153,7 @@ const App: React.FC = () => {
 
     const shuffledWords = allWords.sort(() => Math.random() - 0.5);
     
+    // Use a small timeout to make the loading spinner visible for a better user experience
     setTimeout(() => {
       setGameData(prev => ({
         ...prev,
@@ -395,7 +394,7 @@ const App: React.FC = () => {
     <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
        <div className="w-full max-w-4xl mx-auto relative">
          {renderContent()}
-       </div>
+      </div>
     </div>
   );
 };
