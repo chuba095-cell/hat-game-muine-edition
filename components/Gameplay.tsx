@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Team } from '../types';
 import { playCorrectSound, unlockAudio, playTimerEndSound, playTimerTickSound, playPauseSound, playUnpauseSound } from '../services/soundService';
@@ -151,9 +150,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
       </div>
 
       <div className="mb-6">
-        <p className="text-xl text-gray-500">Ход команды:</p>
-        <h3 className={`text-2xl sm:text-3xl font-bold ${currentTeam.color.textColor}`}>{currentTeam.name}</h3>
-        <p className="text-xl text-gray-500 mt-2">Играет:</p>
+        <p className="text-xl text-gray-500">Играет:</p>
         <h2 className={`text-3xl sm:text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h2>
       </div>
       
@@ -210,27 +207,29 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
               </svg>
               <span className="absolute text-4xl sm:text-5xl font-bold text-gray-800">{timer}</span>
           </div>
-          <div className="relative w-full">
-            <button
-              onClick={handleNextWord}
-              disabled={!currentWord || isPaused}
-              className="bg-indigo-100 w-full p-8 sm:p-12 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-all transform hover:bg-indigo-200 active:bg-indigo-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+          <button
+            onClick={handleNextWord}
+            disabled={!currentWord || isPaused}
+            className="bg-indigo-100 w-full p-8 sm:p-12 rounded-xl min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-all transform hover:bg-indigo-200 active:bg-indigo-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+          >
+            <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
+                {currentWord || "Слова закончились!"}
+            </h1>
+          </button>
+          
+          <div className="w-full flex flex-col items-center gap-4 mt-4">
+            <button 
+                onClick={handleShowDictionary} 
+                disabled={!dictionaryEntry}
+                className={`rounded-full w-14 h-14 flex-shrink-0 flex items-center justify-center text-3xl font-bold transition-all ${
+                    dictionaryEntry
+                        ? 'bg-blue-500 text-white shadow-lg hover:bg-blue-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
+                        : 'bg-gray-200 text-gray-400 shadow-inner cursor-not-allowed'
+                }`}
+                aria-label={dictionaryEntry ? "Показать определение" : "Определение отсутствует"}
             >
-              <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
-                  {currentWord || "Слова закончились!"}
-              </h1>
+                ?
             </button>
-            {dictionaryEntry && (
-              <button 
-                  onClick={handleShowDictionary} 
-                  className="absolute -top-3 -right-3 sm:top-0 sm:right-0 transform translate-x-1/4 -translate-y-1/4 bg-blue-500 text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg hover:bg-blue-600 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
-                  aria-label="Показать определение"
-              >
-                  ?
-              </button>
-            )}
-          </div>
-          <div className="w-full flex flex-col gap-3 mt-4">
             <button
               onClick={togglePause}
               className="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-yellow-600 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 flex items-center justify-center"

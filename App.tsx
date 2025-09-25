@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { GameState, Difficulty, AssignmentMethod, Player, Team } from './types';
 import GameSetup from './components/GameSetup';
@@ -409,12 +408,22 @@ const App: React.FC = () => {
       case GameState.TurnReview:
         return <TurnReview initialGuessedWords={wordsForReview} lastWord={lastWordForReview} onConfirm={handleTurnEnd} />;
       case GameState.TurnSummary:
+        const isKirill = currentPlayer?.name && ['кирилл', 'кирюша'].includes(currentPlayer.name.toLowerCase());
         return (
             <div className="text-center p-6 sm:p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
-                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!</h2>
-                <p className="text-base sm:text-lg mb-6 text-gray-600">Слова, которые ты объяснил(а):</p>
-                <div className="grid grid-cols-2 gap-2 mb-8 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-md">
-                    {currentTurnWords.length > 0 ? currentTurnWords.map((word, index) => <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">{word}</span>) : <p className="col-span-2 text-gray-500">Не было угадано ни одного слова.</p>}
+                {isKirill ? (
+                    <>
+                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}! Ты просто ПИСЯКОРОЛЕВА!</h2>
+                        <p className="text-base sm:text-lg mb-6 text-gray-600">Слова, которые ты угадал(а):</p>
+                    </>
+                ) : (
+                    <>
+                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!</h2>
+                        <p className="text-base sm:text-lg mb-6 text-gray-600">Слова, которые ты объяснил(а):</p>
+                    </>
+                )}
+                <div className="flex flex-wrap justify-center gap-2 mb-8 p-2 bg-gray-50 rounded-md">
+                    {currentTurnWords.length > 0 ? currentTurnWords.map((word, index) => <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm">{word}</span>) : <p className="text-gray-500">Не было угадано ни одного слова.</p>}
                 </div>
                 <div className="flex flex-col gap-3 mt-8">
                     <button onClick={handleNextPlayer} className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
