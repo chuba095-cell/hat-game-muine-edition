@@ -76,13 +76,13 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
     if (countdown > 0) {
       const timerId = setTimeout(() => {
         setCountdown(c => (c !== null ? c - 1 : null));
-      }, 1000);
+      }, 800);
       return () => clearTimeout(timerId);
     } else { // countdown is 0
       const startTimerId = setTimeout(() => {
         setIsTimerRunning(true);
         setCountdown(null);
-      }, 800);
+      }, 500);
       return () => clearTimeout(startTimerId);
     }
   }, [countdown]);
@@ -175,10 +175,8 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
 
       {!isTimerRunning && countdown !== null && (
         <div className="flex flex-col items-center justify-center min-h-[300px] font-extrabold text-indigo-600">
-          {countdown > 0 ? (
+          {countdown > 0 && (
             <p key={countdown} className="animate-pop-in text-8xl sm:text-9xl">{countdown}</p>
-          ) : (
-            <p key="start" className="animate-pop-in text-7xl sm:text-8xl">Старт!</p>
           )}
         </div>
       )}
