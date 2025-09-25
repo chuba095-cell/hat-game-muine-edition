@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Team } from '../types';
 import { playCorrectSound, unlockAudio, playTimerEndSound, playTimerTickSound, playPauseSound, playUnpauseSound } from '../services/soundService';
+import { dictionary } from '../data/dictionary';
 
 interface GameplayProps {
   wordPool: string[];
@@ -30,6 +31,8 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [guessedWordsThisTurn, setGuessedWordsThisTurn] = useState<string[]>([]);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [showDictionary, setShowDictionary] = useState(false);
+  const dictionaryPausedGame = useRef(false);
 
   const timeoutCallbackRef = useRef<(() => void) | null>(null);
 
@@ -98,6 +101,24 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
     }
     setIsPaused(prev => !prev);
   };
+  
+  const handleShowDictionary = () => {
+    if (!isPaused) {
+        togglePause();
+        dictionaryPausedGame.current = true;
+    } else {
+        dictionaryPausedGame.current = false;
+    }
+    setShowDictionary(true);
+  };
+
+  const handleCloseDictionary = () => {
+      setShowDictionary(false);
+      if (dictionaryPausedGame.current) {
+          togglePause();
+      }
+      dictionaryPausedGame.current = false;
+  };
 
   const handleNextWord = useCallback(() => {
     playCorrectSound();
@@ -116,6 +137,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
   }, [currentWordIndex, wordPool, onTurnFinish, guessedWordsThisTurn, timer]);
 
   const currentWord = wordPool[currentWordIndex];
+  const dictionaryEntry = currentWord ? dictionary[currentWord.toLowerCase()] : undefined;
   const timerProgress = (timer / timerDuration) * 100;
   const wordFontSize = getWordFontSize(currentWord);
 
@@ -190,17 +212,26 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
               </svg>
               <span className="absolute text-4xl sm:text-5xl font-bold text-gray-800">{timer}</span>
           </div>
-
-          <button
-            onClick={handleNextWord}
-            disabled={!currentWord || isPaused}
-            className="bg-gray-50 w-full p-6 sm:p-10 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
-          >
-            <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
-                {currentWord || "Слова закончились!"}
-            </h1>
-          </button>
-          
+          <div className="relative w-full">
+            <button
+              onClick={handleNextWord}
+              disabled={!currentWord || isPaused}
+              className="bg-gray-50 w-full p-6 sm:p-10 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+            >
+              <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
+                  {currentWord || "Слова закончились!"}
+              </h1>
+            </button>
+            {dictionaryEntry && (
+              <button 
+                  onClick={handleShowDictionary} 
+                  className="absolute -top-3 -right-3 sm:top-0 sm:right-0 transform translate-x-1/4 -translate-y-1/4 bg-blue-500 text-white rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg hover:bg-blue-600 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                  aria-label="Показать определение"
+              >
+                  ?
+              </button>
+            )}
+          </div>
           <div className="w-full flex flex-col gap-3 mt-4">
             <button
               onClick={togglePause}
@@ -218,6 +249,24 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
               )}
             </button>
           </div>
+        </div>
+      )}
+       {showDictionary && dictionaryEntry && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 animate-fade-in" role="dialog" aria-modal="true" aria-labelledby="dictionary-title">
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-lg mx-4 animate-pop-in">
+                <h2 id="dictionary-title" className="text-2xl sm:text-3xl font-bold mb-4 text-gray-800 capitalize">{currentWord}</h2>
+                <ul className="space-y-3 text-left list-disc list-inside mb-6">
+                    {dictionaryEntry.map((def, index) => (
+                        <li key={index} className="text-base sm:text-lg text-gray-700">{def}</li>
+                    ))}
+                </ul>
+                <button
+                    onClick={handleCloseDictionary}
+                    className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Закрыть
+                </button>
+            </div>
         </div>
       )}
     </div>
