@@ -183,7 +183,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
       
       {isTimerRunning && (
         <div className="flex flex-col items-center">
-          <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center mb-8">
+          <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center mb-6">
               <svg className="w-full h-full" viewBox="0 0 100 100">
                   <circle
                       className="text-gray-200"
@@ -214,7 +214,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
             <button
               onClick={handleNextWord}
               disabled={!currentWord || isPaused}
-              className="bg-gray-50 w-full p-6 sm:p-10 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-colors hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+              className="bg-indigo-50 w-full p-8 sm:p-12 rounded-xl mb-4 min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-all transform hover:bg-indigo-100 active:bg-indigo-200 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
                   {currentWord || "Слова закончились!"}

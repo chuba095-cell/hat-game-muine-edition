@@ -309,6 +309,7 @@ const App: React.FC = () => {
       
       setGameData(prev => ({
         ...prev,
+        wordPool: [...prev.wordPool].sort(() => Math.random() - 0.5),
         currentTeamIndex: nextTeamIndex,
         currentPlayerIndices: nextPlayerIndices,
         currentTurnWords: [],
