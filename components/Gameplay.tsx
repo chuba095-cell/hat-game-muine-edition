@@ -210,9 +210,9 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
           <button
             onClick={handleNextWord}
             disabled={!currentWord || isPaused}
-            className="bg-indigo-100 w-full p-8 sm:p-12 rounded-xl min-h-[140px] sm:min-h-[160px] flex items-center justify-center transition-all transform hover:bg-indigo-200 active:bg-indigo-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
+            className="bg-green-100 w-full p-8 sm:p-12 rounded-xl min-h-[140px] sm:min-h-[160px] flex items-center justify-center hover:bg-green-200 active:bg-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
           >
-            <h1 className={`${wordFontSize} font-bold transition-all duration-300 ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
+            <h1 className={`${wordFontSize} font-bold ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
                 {currentWord || "Слова закончились!"}
             </h1>
           </button>
