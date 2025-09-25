@@ -71,7 +71,7 @@ const App: React.FC = () => {
     }
     return initialState;
   });
-
+  
   useEffect(() => {
     localStorage.setItem('hatGameState', JSON.stringify(gameData));
   }, [gameData]);
