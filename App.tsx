@@ -250,23 +250,12 @@ const App: React.FC = () => {
       return team;
     });
 
-    let nextGameState: GameState;
-    if (wordPool.length > 0 && allGuessed.length >= wordPool.length) {
-      if (currentRound < TOTAL_ROUNDS) {
-        nextGameState = GameState.EndOfRoundSummary;
-      } else {
-        nextGameState = GameState.RoundSummary;
-      }
-    } else {
-      nextGameState = GameState.TurnSummary;
-    }
-
     setGameData(prev => ({
       ...prev,
       teams: updatedTeams,
       guessedWords: allGuessed,
       currentTurnWords: wordsGuessedThisTurn,
-      gameState: nextGameState,
+      gameState: GameState.TurnSummary,
     }));
   };
 
@@ -305,6 +294,15 @@ const App: React.FC = () => {
   };
   
   const handleNextPlayer = () => {
+      if (wordPool.length > 0 && guessedWords.length >= wordPool.length) {
+        if (currentRound < TOTAL_ROUNDS) {
+          setGameData(prev => ({ ...prev, gameState: GameState.EndOfRoundSummary }));
+        } else {
+          setGameData(prev => ({ ...prev, gameState: GameState.RoundSummary }));
+        }
+        return;
+      }
+
       const nextTeamIndex = (currentTeamIndex + 1) % teams.length;
       const nextPlayerIndices = [...currentPlayerIndices];
       nextPlayerIndices[currentTeamIndex] = (nextPlayerIndices[currentTeamIndex] + 1) % teams[currentTeamIndex].players.length;
