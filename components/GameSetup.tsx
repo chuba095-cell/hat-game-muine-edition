@@ -1,3 +1,4 @@
+
 // FIX: Moved all component logic, including state hooks and helper functions, inside the GameSetup functional component to resolve scope-related errors and ensure proper component structure.
 import React, { useState, useEffect } from 'react';
 import { Difficulty, AssignmentMethod, Player } from '../types';
@@ -165,16 +166,16 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
           </div>
         )}
         
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <input
             type="text"
             value={playerName}
             onChange={(e) => setPlayerName(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addPlayer()}
             placeholder="Имя игрока"
-            className="flex-grow p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-grow p-[10px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <button onClick={addPlayer} className="bg-indigo-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-indigo-700 transition-colors">
+          <button onClick={addPlayer} className="bg-indigo-600 text-white font-bold py-[10px] px-5 rounded-lg hover:bg-indigo-700 transition-colors">
             Добавить
           </button>
         </div>
