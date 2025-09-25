@@ -1,3 +1,4 @@
+
 // FIX: Moved all component logic, including state hooks and helper functions, inside the GameSetup functional component to resolve scope-related errors and ensure proper component structure.
 import React, { useState, useEffect } from 'react';
 import { Difficulty, AssignmentMethod, Player } from '../types';
@@ -155,7 +156,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-xl shadow-lg w-full max-w-2xl mx-auto">
-      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-gray-800">Игра в Шляпу</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-center mb-8 text-gray-800">Шляпа. MuiNe Edition</h1>
 
       {step === 1 && (
         <>

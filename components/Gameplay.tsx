@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Player, Team } from '../types';
 import { playCorrectSound, unlockAudio, playTimerEndSound, playTimerTickSound, playPauseSound, playUnpauseSound } from '../services/soundService';
@@ -132,9 +130,9 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
 
       <div className="mb-6">
         <p className="text-xl text-gray-500">Ход команды:</p>
-        <h2 className={`text-3xl sm:text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentTeam.name}</h2>
+        <h3 className={`text-2xl sm:text-3xl font-bold ${currentTeam.color.textColor}`}>{currentTeam.name}</h3>
         <p className="text-xl text-gray-500 mt-2">Играет:</p>
-        <h3 className={`text-2xl sm:text-3xl font-bold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h3>
+        <h2 className={`text-3xl sm:text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h2>
       </div>
       
       {!isTimerRunning && countdown === null && (

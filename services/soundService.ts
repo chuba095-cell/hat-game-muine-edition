@@ -72,19 +72,29 @@ export const playTimerEndSound = () => {
 
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
+    const now = audioContext.currentTime;
 
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
-    // Свойства звука: резкий, цифровой сигнал
-    oscillator.type = 'square';
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.1);
+    // Свойства звука: короткая сирена
+    oscillator.type = 'sawtooth';
+    gainNode.gain.setValueAtTime(0.25, now);
+    
+    const duration = 0.5; // Общая длительность
+    
+    // Осцилляция частоты для эффекта сирены
+    oscillator.frequency.setValueAtTime(1000, now);
+    oscillator.frequency.linearRampToValueAtTime(600, now + 0.1);
+    oscillator.frequency.linearRampToValueAtTime(1000, now + 0.2);
+    oscillator.frequency.linearRampToValueAtTime(600, now + 0.3);
+    oscillator.frequency.linearRampToValueAtTime(1000, now + 0.4);
 
-    oscillator.start(audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.2);
-    oscillator.stop(audioContext.currentTime + 0.2);
+    // Плавное затухание
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration);
 };
 
 /**
