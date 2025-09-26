@@ -415,7 +415,7 @@ const App: React.FC = () => {
             <div className="text-center p-6 sm:p-8 bg-white rounded-xl shadow-lg max-w-lg mx-auto">
                 {isKirill ? (
                     <>
-                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}! Ты просто ПИСЯКОРОЛЕВА!</h2>
+                        <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Отличная работа, {currentPlayer?.name}!<br />Ты просто ПИСЯКОРОЛЕВА!</h2>
                         <p className="text-base sm:text-lg mb-6 text-gray-600">Слова, которые ты угадал(а):</p>
                     </>
                 ) : (
