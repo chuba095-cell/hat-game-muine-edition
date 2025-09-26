@@ -71,6 +71,8 @@ const App: React.FC = () => {
     return initialState;
   });
   
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
+
   useEffect(() => {
     localStorage.setItem('hatGameState', JSON.stringify(gameData));
   }, [gameData]);
@@ -447,8 +449,43 @@ const App: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
        <div className="w-full max-w-4xl mx-auto relative">
+         {gameState !== GameState.Setup && gameState !== GameState.TeamsSummary && gameState !== GameState.GeneratingWords && (
+            <button
+                onClick={() => setShowResetConfirmModal(true)}
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
+                aria-label="Завершить игру"
+            >
+                <span className="text-2xl font-bold leading-none -mt-1">&times;</span>
+            </button>
+         )}
          {renderContent()}
       </div>
+      
+      {showResetConfirmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 animate-fade-in">
+            <div className="bg-white p-6 sm:p-8 rounded-xl shadow-2xl text-center max-w-sm mx-4 animate-pop-in">
+                <h2 className="text-xl sm:text-2xl font-bold mb-4 text-gray-800">Завершить игру?</h2>
+                <p className="text-gray-600 mb-8">Вы точно хотите завершить текущую игру? Весь прогресс будет потерян.</p>
+                <div className="flex justify-center gap-4">
+                    <button
+                        onClick={() => setShowResetConfirmModal(false)}
+                        className="flex-1 bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-lg hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                    >
+                        Отмена
+                    </button>
+                    <button
+                        onClick={() => {
+                            resetGame();
+                            setShowResetConfirmModal(false);
+                        }}
+                        className="flex-1 bg-red-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                        Завершить
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };
