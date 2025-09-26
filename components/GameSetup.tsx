@@ -126,6 +126,9 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
     if (isNaN(num) || num < 2) {
       setNumberOfTeams(2);
       setTeamsInputValue('2');
+    } else if (num > 8) {
+      setNumberOfTeams(8);
+      setTeamsInputValue('8');
     }
   };
 
@@ -214,7 +217,7 @@ const GameSetup: React.FC<GameSetupProps> = ({ onStart }) => {
               onChange={handleTeamsChange}
               onBlur={handleTeamsBlur}
               min="2"
-              max={players.length > 1 ? players.length : 10}
+              max="8"
               className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>

@@ -46,8 +46,6 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
 
   useEffect(() => {
     // The main timer interval logic.
-    // It only re-runs if the timer is started, stopped, or paused.
-    // Clicking "Next Word" will NOT cause this effect to re-run and reset the 1-second tick.
     if (!isTimerRunning || isPaused) {
       return;
     }
@@ -81,7 +79,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
       const startTimerId = setTimeout(() => {
         setIsTimerRunning(true);
         setCountdown(null);
-      }, 500);
+      }, 100); // Short delay before timer starts
       return () => clearTimeout(startTimerId);
     }
   }, [countdown]);
@@ -140,6 +138,8 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
   const timerProgress = (timer / timerDuration) * 100;
   const wordFontSize = getWordFontSize(currentWord);
 
+  const isGameStartingOrActive = isTimerRunning || countdown !== null;
+
   return (
     <div className="w-full max-w-2xl mx-auto p-4 sm:p-8 bg-white rounded-2xl shadow-2xl text-center">
       <div className="mb-4 text-center border-b border-gray-200 pb-4">
@@ -154,7 +154,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
         <h2 className={`text-3xl sm:text-4xl font-extrabold ${currentTeam.color.textColor}`}>{currentPlayer.name}</h2>
       </div>
       
-      {!isTimerRunning && countdown === null && (
+      {!isGameStartingOrActive && (
         <div className="flex flex-col items-center">
             <div className="mb-6 bg-gray-100 p-4 rounded-lg text-center shadow-inner">
               <p className="text-lg font-medium text-gray-700">Осталось слов в шляпе:</p>
@@ -169,16 +169,8 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
             </button>
         </div>
       )}
-
-      {!isTimerRunning && countdown !== null && (
-        <div className="flex flex-col items-center justify-center min-h-[300px] font-extrabold text-indigo-600">
-          {countdown > 0 && (
-            <p key={countdown} className="animate-pop-in text-8xl sm:text-9xl">{countdown}</p>
-          )}
-        </div>
-      )}
       
-      {isTimerRunning && (
+      {isGameStartingOrActive && (
         <div className="flex flex-col items-center">
           <div className="relative w-32 h-32 sm:w-40 sm:h-40 flex items-center justify-center mb-2">
               <svg className="w-full h-full" viewBox="0 0 100 100">
@@ -195,7 +187,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
                       className="text-indigo-500"
                       strokeWidth="8"
                       strokeDasharray="283"
-                      strokeDashoffset={283 - (283 * timerProgress) / 100}
+                      strokeDashoffset={isTimerRunning ? (283 - (283 * timerProgress) / 100) : 0}
                       strokeLinecap="round"
                       stroke="currentColor"
                       fill="transparent"
@@ -205,23 +197,29 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
                       style={{ transition: 'stroke-dashoffset 1s linear' }}
                   />
               </svg>
-              <span className="absolute text-4xl sm:text-5xl font-bold text-gray-800">{timer}</span>
+              <span className="absolute text-4xl sm:text-5xl font-bold text-gray-800">{isTimerRunning ? timer : timerDuration}</span>
           </div>
           <button
             onClick={handleNextWord}
-            disabled={!currentWord || isPaused}
+            disabled={!currentWord || isPaused || countdown !== null}
             className="bg-green-100 w-full p-8 sm:p-12 rounded-xl min-h-[140px] sm:min-h-[160px] flex items-center justify-center hover:bg-green-200 active:bg-green-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-200 disabled:cursor-not-allowed"
           >
-            <h1 className={`${wordFontSize} font-bold ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
-                {currentWord || "Слова закончились!"}
-            </h1>
+            {countdown !== null && countdown > 0 ? (
+                <h1 key={countdown} className="animate-pop-in text-8xl sm:text-9xl font-extrabold text-gray-900">
+                    {countdown}
+                </h1>
+            ) : (
+                <h1 className={`${wordFontSize} font-bold ${isPaused ? 'text-gray-400' : 'text-gray-900'}`}>
+                    {currentWord || (isTimerRunning ? "Слова закончились!" : ' ')}
+                </h1>
+            )}
           </button>
           
           <div className="w-full flex flex-col items-center gap-4 mt-4">
             <button 
                 onClick={handleShowDictionary} 
-                disabled={!dictionaryEntry}
-                className={`rounded-full w-14 h-14 flex-shrink-0 flex items-center justify-center text-3xl font-bold transition-all ${
+                disabled={!dictionaryEntry || countdown !== null}
+                className={`rounded-full w-20 h-14 flex-shrink-0 flex items-center justify-center text-3xl font-bold transition-all ${
                     dictionaryEntry
                         ? 'bg-blue-500 text-white shadow-lg hover:bg-blue-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2'
                         : 'bg-gray-200 text-gray-400 shadow-inner cursor-not-allowed'
@@ -232,6 +230,7 @@ const Gameplay: React.FC<GameplayProps> = ({ wordPool, onTurnFinish, currentPlay
             </button>
             <button
               onClick={togglePause}
+              disabled={countdown !== null}
               className="w-full bg-yellow-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-yellow-600 transition-colors focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 flex items-center justify-center"
               aria-label={isPaused ? 'Продолжить' : 'Пауза'}
             >
